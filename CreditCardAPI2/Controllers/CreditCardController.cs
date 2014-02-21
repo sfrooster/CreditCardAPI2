@@ -28,11 +28,15 @@ namespace CreditCardAPI2.Controllers
         {
             HttpResponseMessage response = null;
 
+            //just for demo
+            string fields = string.Format("CCN: {0}\nCVN: {1}\nFName: {2}\nLName: {3}", cc.CCNumber, cc.CVN, cc.FName, cc.LName);
+            bool succeed = (new Random()).Next(2) == 0 ? true : false;
+
             try {
                 //validate credit card here
-                if (true)
+                if (succeed)
                 {
-                    response = Request.CreateResponse<CreditCardResponse>(HttpStatusCode.OK, new CreditCardResponse() { Authorized = true, Reason = string.Empty });
+                    response = Request.CreateResponse<CreditCardResponse>(HttpStatusCode.OK, new CreditCardResponse() { Authorized = true, Reason = fields });
                 }
                 else
                 {

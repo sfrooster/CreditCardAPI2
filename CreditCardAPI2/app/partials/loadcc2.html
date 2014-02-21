@@ -1,0 +1,41 @@
+﻿<table id="tblPayment">
+    <tbody>
+        <tr>
+            <td class="col-center" colspan="2">
+                <h3>Payment Information</h3>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Card Number<span id="lblCardNumber">*</span>
+            </td>
+            <td>
+                <input name="txtCardNumber" id="txtCardNumber" type="text" data-ng-model="model.info.CCNumber" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Security Code<span id="lblCVNumber">*</span>
+            </td>
+            <td>
+                <input name="txtCVNumber" id="txtCVNumber" type="text" data-ng-model="model.info.CVN">
+            </td>
+        </tr>
+        <tr>
+            <td>First Name<span id="lblFName">*</span></td>
+            <td>
+                <input name="txtFirstName" id="txtFirstName" type="text" data-ng-model="model.info.FName" />
+            </td>
+        </tr>
+        <tr>
+            <td>Last Name<span id="lblLName">*</span></td>
+            <td>
+                <input name="txtLastName" id="txtLastName" type="text" data-ng-model="model.info.LName" />
+            </td>
+        </tr>
+        <tr>
+            <td><input type="button" value="Send" data-ng-click="submitCreditCard(model.info)" /></td>
+            <td><input type="button" value="Cancel" /></td>
+        </tr>
+    </tbody>
+</table>

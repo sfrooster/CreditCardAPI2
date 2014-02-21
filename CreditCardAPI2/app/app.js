@@ -25,54 +25,30 @@ var CreditCardInfo = (function () {
     return CreditCardInfo;
 })();
 
-var CreditCardFactory = (function () {
-    //get urlBase():string {
-    //    return this._urlBase;
-    //}
-    function CreditCardFactory($http) {
-        this.$http = $http;
-        this.submitCreditCard = function (ccard) {
-            return this.$http.post(this._urlBase, ccard);
-        };
-        this._urlBase = '/api/creditcard';
-    }
-    return CreditCardFactory;
-})();
-
 var CreditCardController = (function () {
-    function CreditCardController($scope, $http, $modal) {
-        var _this = this;
+    function CreditCardController($scope, $http, ms) {
         this.$scope = $scope;
         this.$http = $http;
-        this.$modal = $modal;
+        this.ms = ms;
         $scope.model = new CreditCardInfo();
-        this._ccFactory = new CreditCardFactory(this.$http);
 
         $scope.submitCreditCard = function (ccinfo) {
-            var bp = 0;
-            _this._ccFactory.submitCreditCard(ccinfo).then(function (s) {
-                //s.data.Authorized/.Reason, s.status
-                var bp = 0;
-                var modalInstance = $modal.open({ template: '<div>Authorized!!!</div>', resolve: {} });
-
-                modalInstance.result.then(function () {
-                    var bp = 0;
-                }, function () {
-                    var bp = 0;
-                });
+            $http.post('/api/creditcard', ccinfo).then(function (s) {
+                return s.data.Authorized ? ms.show('Success', 'Your Credit Card Was Processed', s.data.Reason) : ms.show('Error', 'Your Credit Card Was <strong>Not</strong>Processed', s.data.Reason);
             }, function (e) {
-                //e.data.Message, e.status
-                var bp = 0;
-                var modalInstance = $modal.open({ template: '<div>Error!!!</div>', resolve: {} });
+                return ms.show('Error', 'Your Credit Card Was Not Processed', e.data.Message);
+            }).then(function (mi) {
+                mi.opened.then(function (o) {
+                }, function (e) {
+                });
 
-                modalInstance.result.then(function () {
-                    var bp = 0;
-                }, function () {
-                    var bp = 0;
+                mi.result.then(function (c) {
+                }, function (d) {
                 });
             });
         };
     }
+    CreditCardController.$inject = ['$scope', '$http', 'ms'];
     return CreditCardController;
 })();
 
@@ -91,10 +67,49 @@ var ModalInstanceController = (function () {
     return ModalInstanceController;
 })();
 
-var app = angular.module('CreditCardApp', ['ngRoute', 'ui.bootstrap']).factory('CreditCardFactory', CreditCardFactory).controller('CreditCardController', CreditCardController).config(function ($routeProvider) {
-    $routeProvider.when('/loadcc', {
-        controller: 'CreditCardController',
-        templateUrl: 'app/partials/loadcc.html'
-    }).otherwise({ redirectTo: '/loadcc' });
+var CreditCardModalService = (function () {
+    function CreditCardModalService($modal) {
+        this.$modal = $modal;
+        var bp = 0;
+    }
+    CreditCardModalService.prototype.show = function (header, body, bodyExtra) {
+        var opts = {
+            backdrop: true,
+            keyboard: true,
+            modalFade: true,
+            templateUrl: '/app/partials/modal.html',
+            controller: function ($scope, $modalInstance) {
+                $scope.modalOptions = {
+                    okButtonText: 'Ok',
+                    headerText: header,
+                    bodyText: body,
+                    bodyAdditionalText: bodyExtra,
+                    ok: function () {
+                        $modalInstance.close();
+                    },
+                    dismiss: function () {
+                        $modalInstance.dismiss();
+                    }
+                };
+            }
+        };
+
+        return this.$modal.open(opts);
+    };
+    CreditCardModalService.$inject = ['$modal'];
+    return CreditCardModalService;
+})();
+
+var app = angular.module('cca', ['ngRoute', 'ui.bootstrap']);
+app.service('ms', ['$modal', CreditCardModalService]);
+app.controller('ccc', ['$scope', '$http', 'ms', CreditCardController]);
+app.config(function ($routeProvider) {
+    $routeProvider.when('/loadcc1', {
+        controller: 'ccc',
+        templateUrl: '/app/partials/loadcc1.html'
+    }).when('/loadcc2', {
+        controller: 'ccc',
+        templateUrl: '/app/partials/loadcc2.html'
+    }).otherwise({ redirectTo: '/loadcc1' });
 });
 //# sourceMappingURL=app.js.map

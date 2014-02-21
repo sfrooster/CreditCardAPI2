@@ -20,58 +20,28 @@ interface ICreditCardScope extends ng.IScope {
     submitCreditCard: (ccard: CreditCardModel) => void;
 }
 
-class CreditCardFactory {
-    private _urlBase: string;
-    //get urlBase():string {
-    //    return this._urlBase;
-    //}
-
-    constructor(private $http: ng.IHttpService) {
-        this._urlBase = '/api/creditcard';
-    }
-
-    public submitCreditCard = function (ccard: CreditCardModel): ng.IHttpPromise<any> {
-        return this.$http.post(this._urlBase, ccard);
-    }
-}
-
 class CreditCardController {
-    private _ccFactory: CreditCardFactory;
-
-    constructor(private $scope: ICreditCardScope, private $http: ng.IHttpService, private $modal: ng.ui.bootstrap.IModalService) {
+    static $inject = ['$scope', '$http', 'ms'];
+    constructor(private $scope: ICreditCardScope, private $http: ng.IHttpService, private ms: CreditCardModalService) {
         $scope.model = new CreditCardInfo();
-        this._ccFactory = new CreditCardFactory(this.$http);
 
         $scope.submitCreditCard = (ccinfo: CreditCardModel): void => {
-            var bp = 0;
-            this._ccFactory.submitCreditCard(ccinfo).then(
-                (s: ng.IHttpPromiseCallbackArg<any>) => {
-                    //s.data.Authorized/.Reason, s.status
-                    var bp = 0;
-                    var modalInstance = $modal.open({ template: '<div>Authorized!!!</div>', resolve: {} });
+            $http.post('/api/creditcard', ccinfo).then(
+                (s: ng.IHttpPromiseCallbackArg<CreditCardResponseModel>): ng.ui.bootstrap.IModalServiceInstance =>
+                    s.data.Authorized ? ms.show('Success', 'Your Credit Card Was Processed', s.data.Reason) : ms.show('Error', 'Your Credit Card Was <strong>Not</strong>Processed', s.data.Reason)
+                ,
+                (e: ng.IHttpPromiseCallbackArg<any>): ng.ui.bootstrap.IModalServiceInstance =>
+                    ms.show('Error', 'Your Credit Card Was Not Processed', e.data.Message)
+                ).then((mi) => {
+                    mi.opened.then(
+                        (o) => { }, //opened
+                        (e) => { }  //issue opening
+                        );
 
-                    modalInstance.result.then(
-                        () => {
-                            var bp = 0;
-                        },
-                        () => {
-                            var bp = 0;
-                        }
-                    );
-                },
-                (e: ng.IHttpPromiseCallbackArg<any>) => {
-                    //e.data.Message, e.status
-                    var bp = 0;
-                    var modalInstance = $modal.open({ template: '<div>Error!!!</div>', resolve: {} });
-
-                    modalInstance.result.then(
-                        () => {
-                            var bp = 0;
-                        },
-                        () => {
-                            var bp = 0;
-                        }
-                    );
+                    mi.result.then(
+                        (c) => { }, //closed
+                        (d) => { }  //dismissed
+                        );
                 }
             );
         }
@@ -95,14 +65,47 @@ class ModalInstanceController {
     }
 }
 
-var app = angular.module('CreditCardApp', ['ngRoute', 'ui.bootstrap'])
-    .factory('CreditCardFactory', CreditCardFactory) 
-    .controller('CreditCardController', CreditCardController)
-    .config(function ($routeProvider) {
-        $routeProvider
-            .when('/loadcc', {
-                controller: 'CreditCardController',
-                templateUrl: 'app/partials/loadcc.html'
-            })
-            .otherwise({ redirectTo: '/loadcc' });
-    });
+class CreditCardModalService {
+    static $inject = ['$modal'];
+    constructor(private $modal: ng.ui.bootstrap.IModalService) {
+        var bp = 0;
+    }
+
+    show(header: string, body: string, bodyExtra: string): ng.ui.bootstrap.IModalServiceInstance {
+        var opts: ng.ui.bootstrap.IModalSettings = {
+            backdrop: true,
+            keyboard: true,
+            modalFade: true,
+            templateUrl: '/app/partials/modal.html',
+            controller: ($scope, $modalInstance: ng.ui.bootstrap.IModalServiceInstance) => {
+                $scope.modalOptions = {
+                    okButtonText: 'Ok',
+                    headerText: header,
+                    bodyText: body,
+                    bodyAdditionalText: bodyExtra,
+                    ok: () => { $modalInstance.close(); },
+                    dismiss: () => { $modalInstance.dismiss() }
+                };
+            }
+        };
+
+        return this.$modal.open(opts);
+    }
+}
+
+var app = angular.module('cca', ['ngRoute', 'ui.bootstrap']);
+app.service('ms', ['$modal', CreditCardModalService]);
+app.controller('ccc', ['$scope', '$http', 'ms', CreditCardController]);
+app.config(function ($routeProvider) {
+    $routeProvider
+        .when('/loadcc1', {
+            controller: 'ccc',
+            templateUrl: '/app/partials/loadcc1.html'
+        })
+        .when('/loadcc2', {
+            controller: 'ccc',
+            templateUrl: '/app/partials/loadcc2.html'
+        })
+        .otherwise({ redirectTo: '/loadcc1' });
+});
+

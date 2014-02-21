@@ -9,8 +9,6 @@
 
 namespace CreditCardAPI2.Views
 {
-
-
     public partial class CreditCardHostExample
     {
 
